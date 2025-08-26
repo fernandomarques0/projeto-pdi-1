@@ -6,6 +6,22 @@ from PIL import Image
 
 
 def _transform(matriz, rows: int, columns: int) -> np.ndarray:
+    """
+    Transforma uma matriz para um novo formato, redimensionando-a para o número
+    especificado de linhas e colunas. Se o novo formato tiver mais elementos que
+    a matriz original, os valores extras são preenchidos com zeros. Os dados da
+    matriz original são copiados nas posições correspondentes.
+
+    :param matriz: Matriz original a ser transformada.
+    :type matriz: numpy.ndarray
+    :param rows: Número desejado de linhas na matriz transformada.
+    :type rows: int
+    :param columns: Número desejado de colunas na matriz transformada.
+    :type columns: int
+    :return: Nova matriz de formato (rows, columns), com dados copiados da matriz
+        original e elementos extras preenchidos com zeros.
+    :rtype: numpy.ndarray
+    """
     _rows, _columns = matriz.shape
     matriz_res = np.zeros((rows, columns))
     matriz_res[:_rows, :_columns] = matriz
@@ -14,14 +30,44 @@ def _transform(matriz, rows: int, columns: int) -> np.ndarray:
 
 
 def _apply_activation(value: float, activation: str) -> float:
-    if activation == 'ReLU':
-        return max(0.0, float(value))
-    elif activation == 'Identity' or activation is None:
-        return float(value)
-    else:
-        raise ValueError(f"Função de ativação inválida: {activation}")
+    """
+    Aplica a função de ativação especificada a um valor numérico.
+
+    Esta função processa um valor numérico de entrada aplicando a função de
+    ativação escolhida. Atualmente, suporta ReLU (Rectified Linear Unit). Se a
+    ativação for `ReLU`, retorna o maior entre 0.0 e o valor de entrada. Para
+    outros tipos, retorna o próprio valor.
+
+    :param value: Valor numérico de entrada ao qual a função de ativação será aplicada.
+    :type value: float
+    :param activation: Tipo de função de ativação como string. Valores suportados incluem 'ReLU'.
+    :type activation: str
+    :return: Valor numérico após a aplicação da função de ativação.
+    :rtype: float
+    """
+    return max(0.0, float(value)) if activation == 'ReLU' else float(value)
+
 
 def _compute_pixel(channel: np.ndarray, x: int, y: int, rows: int, columns: int, _filter: np.ndarray, activation: str, bias: int) -> float:
+    """
+    Computa o valor de um único pixel em uma imagem processada aplicando um filtro,
+    bias e função de ativação a um recorte (patch) da imagem de entrada.
+
+    :param channel: Array 2D do NumPy representando o canal da imagem onde a
+        operação será aplicada.
+    :param x: Coordenada x (índice de linha) do canto superior esquerdo do patch a
+        ser processado.
+    :param y: Coordenada y (índice de coluna) do canto superior esquerdo do patch a
+        ser processado.
+    :param rows: Número de linhas do patch a extrair e processar.
+    :param columns: Número de colunas do patch a extrair e processar.
+    :param _filter: Array 2D do NumPy representando o filtro a ser aplicado no patch.
+    :param activation: Nome da função de ativação a aplicar ao valor computado.
+    :param bias: Valor de bias somado ao resultado antes da ativação.
+
+    :return: Valor float resultante da aplicação do filtro, bias e função de
+        ativação sobre o patch de entrada.
+    """
     patch = channel[x:x + rows, y:y + columns]
     transformed = _transform(patch, rows, columns)
     value = float(np.sum(transformed * _filter) + bias)
@@ -30,6 +76,27 @@ def _compute_pixel(channel: np.ndarray, x: int, y: int, rows: int, columns: int,
 
 
 def correlation(image_path: str, rows: int, columns: int, _filter: np.ndarray, activation: str, bias: int):
+    """
+    Executa a operação de correlação 2D em uma imagem usando o filtro, a função
+    de ativação e o bias especificados. A função processa a imagem por canal
+    (Vermelho, Verde, Azul) e aplica a correlação pixel a pixel. O resultado é
+    retornado em ponto flutuante.
+
+    :param image_path: Caminho para o arquivo de imagem de entrada.
+    :type image_path: str
+    :param rows: Número de linhas do filtro de convolução/correlação.
+    :type rows: int
+    :param columns: Número de colunas do filtro de convolução/correlação.
+    :type columns: int
+    :param _filter: Array 2D do NumPy representando o filtro a ser aplicado.
+    :type _filter: np.ndarray
+    :param activation: Função de ativação a aplicar ao resultado da correlação.
+    :type activation: str
+    :param bias: Valor de bias a adicionar ao resultado antes da ativação.
+    :type bias: int
+    :return: Array de imagem em ponto flutuante contendo os resultados por canal.
+    :rtype: np.ndarray
+    """
     imagem = cv2.imread(image_path)
 
     if imagem is None:
@@ -51,34 +118,3 @@ def correlation(image_path: str, rows: int, columns: int, _filter: np.ndarray, a
             img_float[x, y] = (pixel_r, pixel_g, pixel_b)
 
     return img_float  # retorna a matriz crua (float, ainda não salva)
-
-
-def save_image(array: np.ndarray, path: str):
-    """
-    Salva a matriz como imagem uint8.
-    """
-    img_uint8 = np.clip(array, 0, 255).astype(np.uint8)
-    Image.fromarray(img_uint8).save(path)
-
-
-# Não funciona
-def correlate_v2(channel, mask, bias, activation):
-    h, w = channel.shape
-    mh, mw = mask.shape
-    pad_h = mh // 2
-    pad_w = mw // 2
-
-    # Zero padding
-    padded = np.pad(channel.astype(float), ((pad_h, pad_h), (pad_w, pad_w)), mode='constant')
-    output = np.zeros((h, w), dtype=float)
-
-    for i in range(h):
-        for j in range(w):
-            patch = padded[i:i + mh, j:j + mw]
-            val = np.sum(patch * mask) + bias
-            if activation == 'ReLU':
-                val = max(0, val)
-            # Identity does nothing
-            output[i, j] = val
-
-    return output

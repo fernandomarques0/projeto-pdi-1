@@ -1,8 +1,3 @@
-import numpy as np
-
-from procedures.correlation import correlate_v2
-
-
 def _define_equacao_da_reta() -> tuple[float, float]:
     #Calcula inclinação m
     m = (0-255)/(255-128)
@@ -32,11 +27,3 @@ def filtro_pontual() -> float:
         valor = _pixel_maior_que_128(pixel, m, b)  # Faz o calculo baseado na equação da reta.
 
     return valor
-
-
-# Não funciona
-def apply_filter(img, mask, bias, activation):
-    r = correlate_v2(img[:, :, 0], mask, bias, activation)
-    g = correlate_v2(img[:, :, 1], mask, bias, activation)
-    b = correlate_v2(img[:, :, 2], mask, bias, activation)
-    return np.stack([r, g, b], axis=2)
