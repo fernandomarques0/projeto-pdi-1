@@ -26,10 +26,10 @@ def _compute_pixel(channel: np.ndarray, x: int, y: int, rows: int, columns: int,
     transformed = _transform(patch, rows, columns)
     value = float(np.sum(transformed * _filter) + bias)
     value = _apply_activation(value, activation)
-    return float(np.clip(value, 0, 255))
+    return value
 
 
-def correlation(image_path: str, output_path: str, rows: int, columns: int, _filter: np.ndarray, activation: str, bias: int):
+def correlation(image_path: str, rows: int, columns: int, _filter: np.ndarray, activation: str, bias: int):
     imagem = cv2.imread(image_path)
 
     if imagem is None:
@@ -37,25 +37,28 @@ def correlation(image_path: str, output_path: str, rows: int, columns: int, _fil
         sys.exit(1)
 
     height, width, canais = imagem.shape
-    img_matriz = imagem
+    img_float = np.zeros_like(imagem, dtype=float)
 
-    print(f"Imagem original {height}x{width}")
-
-    b_channel, g_channel, r_channel = cv2.split(img_matriz)
-    print(f"r_channel {r_channel}")
+    # Divide canais
+    b_channel, g_channel, r_channel = cv2.split(imagem)
 
     for x in range(height):
         for y in range(width):
             pixel_r = _compute_pixel(r_channel, x, y, rows, columns, _filter, activation, bias)
             pixel_g = _compute_pixel(g_channel, x, y, rows, columns, _filter, activation, bias)
             pixel_b = _compute_pixel(b_channel, x, y, rows, columns, _filter, activation, bias)
-            
 
-            img_matriz[x][y] = pixel_r, pixel_g, pixel_b
+            img_float[x, y] = (pixel_r, pixel_g, pixel_b)
 
-    filtered_image = Image.fromarray(img_matriz)
-    filtered_image.save(output_path)
-    return None
+    return img_float  # retorna a matriz crua (float, ainda não salva)
+
+
+def save_image(array: np.ndarray, path: str):
+    """
+    Salva a matriz como imagem uint8.
+    """
+    img_uint8 = np.clip(array, 0, 255).astype(np.uint8)
+    Image.fromarray(img_uint8).save(path)
 
 
 # Não funciona
