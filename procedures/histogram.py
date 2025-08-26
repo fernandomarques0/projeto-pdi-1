@@ -38,34 +38,63 @@ def _ensure_uint8(img: np.ndarray) -> np.ndarray:
     """
     if img.dtype == np.uint8:
         return img
+
     img_f = img.astype(np.float32)
-    mn = float(img_f.min())
-    mx = float(img_f.max())
-    img_f = img_f - mn
-    if mx - mn > 1e-12:
-        img_f = img_f * (255.0 / (mx - mn))
+    _min = float(img_f.min())
+    _max = float(img_f.max())
+
+    img_f = img_f - _min
+    if _max - _min > 1e-12:
+        img_f = img_f * (255.0 / (_max - _min))
+
     return np.clip(img_f, 0, 255).astype(np.uint8)
 
 
 def _equalize_channel(channel: np.ndarray) -> np.ndarray:
     """
-    Equaliza o histograma de uma imagem de canal único para melhorar seu contraste.
+    Equaliza o histograma de um único canal, redistribuindo os níveis de intensidade
+    ao longo do intervalo do canal. A função modifica o canal de entrada de forma que
+    as intensidades de pixels sejam redistribuídas para melhorar o contraste, mantendo
+    a estrutura geral da imagem.
 
-    Esta função recebe uma imagem de canal único (por exemplo, uma imagem em tons
-    de cinza) e aplica equalização de histograma usando OpenCV para realçar o
-    contraste. Retorna o canal equalizado preservando o tipo e o formato de
-    entrada.
+    A função lida com casos em que o canal possui variação, é degenerado (vazio ou
+    com um único nível de intensidade), ou quando o tipo de dados requer conversão
+    para uint8.
 
-    :param channel: Imagem de canal único representada como um ndarray do NumPy.
-        Tipicamente uma imagem em tons de cinza com valores de pixel no intervalo
-        [0, 255].
-    :return: ndarray do NumPy contendo a versão equalizada do canal de entrada,
-        com o mesmo formato e tipo do original.
+    :param channel: Canal de imagem de entrada como um array 2D do NumPy. Deve ser do tipo
+                    uint8 ou conversível para uint8.
+    :return: Array 2D do mesmo formato do canal de entrada com o histograma equalizado.
+             Tipo de dado é uint8.
     """
-    return cv2.equalizeHist(channel)
+    if channel.dtype != np.uint8:
+        channel = _ensure_uint8(channel)
+
+    flat = channel.ravel()
+    hist = np.bincount(flat, minlength=256).astype(np.int64)
+    cdf = hist.cumsum()
+
+    # Menor CDF > 0
+    nonzero = cdf[cdf > 0]
+    if nonzero.size == 0:
+        # Imagem vazia (degenarada)
+        return np.zeros_like(channel, dtype=np.uint8)
+
+    cdf_min = int(nonzero[0])
+    total = int(flat.size)
+    denom = total - cdf_min
+
+    # Se não há variação (uma única intensidade), preserva a imagem
+    if denom <= 0:
+        return channel.copy()
+
+    # LUT com arredondamento ao inteiro mais próximo (similar ao cvRound)
+    lut = np.rint((cdf - cdf_min) * 255.0 / denom).astype(np.int32)
+    lut = np.clip(lut, 0, 255).astype(np.uint8)
+
+    return lut[channel]
 
 
-def _local_stretch_channel(channel: np.ndarray, m: int, n: int) -> np.ndarray:
+def _local_histogram_expansion(channel: np.ndarray, m: int, n: int) -> np.ndarray:
     """
     Aplica alongamento (stretching) de contraste local ao canal de entrada usando
     operações morfológicas. A intensidade é ajustada com base nos valores mínimo
@@ -92,14 +121,14 @@ def _local_stretch_channel(channel: np.ndarray, m: int, n: int) -> np.ndarray:
     min_f = local_min.astype(np.float32)
     max_f = local_max.astype(np.float32)
 
-    denom = (max_f - min_f)
+    dif = (max_f - min_f)
     # Evita divisão por zero
-    safe_denom = denom.copy()
+    safe_denom = dif.copy()
     safe_denom[safe_denom == 0] = 1.0
 
     out = (ch_f - min_f) * 255.0 / safe_denom
     # Onde não há variação local (max == min), mantém valor original
-    mask_flat = (denom == 0)
+    mask_flat = (dif == 0)
     out[mask_flat] = ch_f[mask_flat]
 
     return np.clip(out, 0, 255).astype(np.uint8)
@@ -137,7 +166,7 @@ def equalize_and_local_expansion(img: np.ndarray, m: int, n: int) -> np.ndarray:
     if img.ndim == 2:
         ch = _ensure_uint8(img)
         ch_eq = _equalize_channel(ch)
-        ch_out = _local_stretch_channel(ch_eq, m, n)
+        ch_out = _local_histogram_expansion(ch_eq, m, n)
         return ch_out
 
     # Trata RGB(A)
@@ -158,9 +187,9 @@ def equalize_and_local_expansion(img: np.ndarray, m: int, n: int) -> np.ndarray:
         b_eq = _equalize_channel(b)
 
         # Expansão local por canal
-        r_out = _local_stretch_channel(r_eq, m, n)
-        g_out = _local_stretch_channel(g_eq, m, n)
-        b_out = _local_stretch_channel(b_eq, m, n)
+        r_out = _local_histogram_expansion(r_eq, m, n)
+        g_out = _local_histogram_expansion(g_eq, m, n)
+        b_out = _local_histogram_expansion(b_eq, m, n)
 
         out_rgb = np.dstack([r_out, g_out, b_out]).astype(np.uint8)
 
