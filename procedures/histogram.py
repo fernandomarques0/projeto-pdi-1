@@ -4,9 +4,7 @@ import cv2
 def histogram_expansion(channel: np.ndarray) -> np.ndarray:
     """
     Expande o intervalo de intensidades de pixels em um canal de imagem para o
-    padrão de 8 bits (0–255). Esta operação é comumente usada em processamento
-    de imagens para aumentar o contraste, redistribuindo os valores de
-    intensidade ao longo de toda a faixa.
+    padrão de 8 bits (0–255).
 
     :param channel: Array 2D do NumPy contendo os valores de intensidade de
         pixels (por exemplo, um canal de imagem). Os valores podem ser inteiros
@@ -53,13 +51,7 @@ def _ensure_uint8(img: np.ndarray) -> np.ndarray:
 def _equalize_channel(channel: np.ndarray) -> np.ndarray:
     """
     Equaliza o histograma de um único canal, redistribuindo os níveis de intensidade
-    ao longo do intervalo do canal. A função modifica o canal de entrada de forma que
-    as intensidades de pixels sejam redistribuídas para melhorar o contraste, mantendo
-    a estrutura geral da imagem.
-
-    A função lida com casos em que o canal possui variação, é degenerado (vazio ou
-    com um único nível de intensidade), ou quando o tipo de dados requer conversão
-    para uint8.
+    ao longo do intervalo do canal.
 
     :param channel: Canal de imagem de entrada como um array 2D do NumPy. Deve ser do tipo
                     uint8 ou conversível para uint8.
@@ -96,14 +88,9 @@ def _equalize_channel(channel: np.ndarray) -> np.ndarray:
 
 def _local_histogram_expansion(channel: np.ndarray, m: int, n: int) -> np.ndarray:
     """
-    Aplica alongamento (stretching) de contraste local ao canal de entrada usando
+    Aplica expansão de histograma local ao canal de entrada usando
     operações morfológicas. A intensidade é ajustada com base nos valores mínimo
     e máximo locais em uma região definida pelo kernel.
-
-    O algoritmo obtém o mínimo e o máximo locais via erosão e dilatação. Nas áreas
-    onde não há variação (isto é, mínimo igual ao máximo), os valores originais são
-    preservados, garantindo que o ajuste de contraste ocorra apenas onde há
-    variação.
 
     :param channel: Canal de imagem de entrada representado como um array 2D do NumPy.
     :param m: Altura do kernel retangular usado nos cálculos locais.
@@ -136,14 +123,7 @@ def _local_histogram_expansion(channel: np.ndarray, m: int, n: int) -> np.ndarra
 
 def equalize_and_local_expansion(img: np.ndarray, m: int, n: int) -> np.ndarray:
     """
-    Aplica equalização global de histograma e alongamento local de intensidade em
-    uma imagem.
-
-    A função ajusta a distribuição de intensidades pela equalização de histograma
-    global seguida do alongamento local de contraste. Suporta imagens em tons de
-    cinza e imagens RGB(A). Imagens em tons de cinza são processadas como um
-    todo; em imagens RGB(A), cada canal de cor é processado independentemente. Se
-    houver canal alfa, ele é preservado, mas não é processado.
+    Aplica equalização global de histograma e expansão de histograma  em uma imagem.
 
     :param img: Imagem de entrada a ser processada. Pode ser grayscale ou RGB(A).
     :type img: numpy.ndarray

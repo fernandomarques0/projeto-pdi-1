@@ -34,9 +34,7 @@ def _apply_activation(value: float, activation: str) -> float:
     Aplica a função de ativação especificada a um valor numérico.
 
     Esta função processa um valor numérico de entrada aplicando a função de
-    ativação escolhida. Atualmente, suporta ReLU (Rectified Linear Unit). Se a
-    ativação for `ReLU`, retorna o maior entre 0.0 e o valor de entrada. Para
-    outros tipos, retorna o próprio valor.
+    ativação escolhida. Atualmente, suporta ReLU (Rectified Linear Unit) e Identidade.
 
     :param value: Valor numérico de entrada ao qual a função de ativação será aplicada.
     :type value: float
@@ -79,8 +77,7 @@ def correlation(image_path: str, rows: int, columns: int, _filter: np.ndarray, a
     """
     Executa a operação de correlação 2D em uma imagem usando o filtro, a função
     de ativação e o bias especificados. A função processa a imagem por canal
-    (Vermelho, Verde, Azul) e aplica a correlação pixel a pixel. O resultado é
-    retornado em ponto flutuante.
+    (Vermelho, Verde, Azul) e aplica a correlação pixel a pixel.
 
     :param image_path: Caminho para o arquivo de imagem de entrada.
     :type image_path: str
