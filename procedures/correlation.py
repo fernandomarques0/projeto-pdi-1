@@ -61,7 +61,7 @@ def _compute_pixel(channel: np.ndarray, x: int, y: int, rows: int, columns: int,
     patch = channel[x:x + rows, y:y + columns]
 
     if patch.size != _filter.size:
-        return _apply_activation(float(channel[x, y]), activation)
+        return _apply_activation(float(channel[x, y]) + bias, activation)
 
     value = float(np.sum(patch * _filter) + bias)
     return _apply_activation(value, activation)
