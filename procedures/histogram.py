@@ -58,32 +58,15 @@ def _equalize_channel(channel: np.ndarray) -> np.ndarray:
     :return: Array 2D do mesmo formato do canal de entrada com o histograma equalizado.
              Tipo de dado é uint8.
     """
-    if channel.dtype != np.uint8:
-        channel = _ensure_uint8(channel)
+    m, n = channel.shape
+    L = 256
 
-    flat = channel.ravel()
-    hist = np.bincount(flat, minlength=256).astype(np.int64)
-    cdf = hist.cumsum()
+    hist, _ = np.histogram(channel, bins=L, range=(0, L))
 
-    # Menor CDF > 0
-    nonzero = cdf[cdf > 0]
-    if nonzero.size == 0:
-        # Imagem vazia (degenarada)
-        return np.zeros_like(channel, dtype=np.uint8)
+    _sum = np.cumsum(hist)
+    result = np.round(((L-1) / (m*n)) * _sum).astype(np.uint8)
+    return result[channel]
 
-    cdf_min = int(nonzero[0])
-    total = int(flat.size)
-    denom = total - cdf_min
-
-    # Se não há variação (uma única intensidade), preserva a imagem
-    if denom <= 0:
-        return channel.copy()
-
-    # LUT com arredondamento ao inteiro mais próximo (similar ao cvRound)
-    lut = np.rint((cdf - cdf_min) * 255.0 / denom).astype(np.int32)
-    lut = np.clip(lut, 0, 255).astype(np.uint8)
-
-    return lut[channel]
 
 
 def _local_histogram_expansion(channel: np.ndarray, m: int, n: int) -> np.ndarray:
