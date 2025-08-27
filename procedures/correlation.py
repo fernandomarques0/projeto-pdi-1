@@ -5,7 +5,7 @@ import cv2
 from PIL import Image
 
 
-def expansion_by_zero(matriz, rows: int, columns: int) -> np.ndarray:
+def extension_by_zero(matriz, rows: int, columns: int) -> np.ndarray:
     """
     Aplica a expansão por zero a uma matriz caso necessário.
 
@@ -59,7 +59,7 @@ def _compute_pixel(channel: np.ndarray, x: int, y: int, rows: int, columns: int,
         ativação sobre o patch de entrada.
     """
     patch = channel[x:x + rows, y:y + columns]
-    matriz = expansion_by_zero(patch, rows, columns)
+    matriz = extension_by_zero(patch, rows, columns)
     value = float(np.sum(matriz * _filter) + bias)
     return _apply_activation(value, activation)
 
