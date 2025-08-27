@@ -5,25 +5,6 @@ import cv2
 from PIL import Image
 
 
-def extension_by_zero(matriz, rows: int, columns: int) -> np.ndarray:
-    """
-    Aplica a expansão por zero a uma matriz caso necessário.
-
-    :param matriz: A matriz de entrada que será expandida.
-    :type matriz: numpy.ndarray
-    :param rows: Número de linhas desejado na matriz expandida.
-    :param columns: Número de colunas desejado na matriz expandida.
-    :return: A matriz expandida com as dimensões especificadas, preenchida com zeros
-             nas posições extra.
-    :rtype: numpy.ndarray
-    """
-    _rows, _columns = matriz.shape
-    matriz_res = np.zeros((rows, columns))
-    matriz_res[:_rows, :_columns] = matriz
-
-    return matriz_res
-
-
 def _apply_activation(value: float, activation: str) -> float:
     """
     Aplica a função de ativação especificada a um valor numérico.
