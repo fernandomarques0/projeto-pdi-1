@@ -5,21 +5,16 @@ import cv2
 from PIL import Image
 
 
-def _transform(matriz, rows: int, columns: int) -> np.ndarray:
+def expansion_by_zero(matriz, rows: int, columns: int) -> np.ndarray:
     """
-    Transforma uma matriz para um novo formato, redimensionando-a para o número
-    especificado de linhas e colunas. Se o novo formato tiver mais elementos que
-    a matriz original, os valores extras são preenchidos com zeros. Os dados da
-    matriz original são copiados nas posições correspondentes.
+    Aplica a expansão por zero a uma matriz caso necessário.
 
-    :param matriz: Matriz original a ser transformada.
+    :param matriz: A matriz de entrada que será expandida.
     :type matriz: numpy.ndarray
-    :param rows: Número desejado de linhas na matriz transformada.
-    :type rows: int
-    :param columns: Número desejado de colunas na matriz transformada.
-    :type columns: int
-    :return: Nova matriz de formato (rows, columns), com dados copiados da matriz
-        original e elementos extras preenchidos com zeros.
+    :param rows: Número de linhas desejado na matriz expandida.
+    :param columns: Número de colunas desejado na matriz expandida.
+    :return: A matriz expandida com as dimensões especificadas, preenchida com zeros
+             nas posições extra.
     :rtype: numpy.ndarray
     """
     _rows, _columns = matriz.shape
@@ -64,10 +59,9 @@ def _compute_pixel(channel: np.ndarray, x: int, y: int, rows: int, columns: int,
         ativação sobre o patch de entrada.
     """
     patch = channel[x:x + rows, y:y + columns]
-    transformed = _transform(patch, rows, columns)
-    value = float(np.sum(transformed * _filter) + bias)
-    value = _apply_activation(value, activation)
-    return value
+    matriz = expansion_by_zero(patch, rows, columns)
+    value = float(np.sum(matriz * _filter) + bias)
+    return _apply_activation(value, activation)
 
 
 def correlation(image_path: str, rows: int, columns: int, _filter: np.ndarray, activation: str, bias: int):
