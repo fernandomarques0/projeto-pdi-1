@@ -33,9 +33,6 @@ def _apply_activation(value: float, activation: str) -> float:
     """
     Aplica a função de ativação especificada a um valor numérico.
 
-    Esta função processa um valor numérico de entrada aplicando a função de
-    ativação escolhida. Atualmente, suporta ReLU (Rectified Linear Unit) e Identidade.
-
     :param value: Valor numérico de entrada ao qual a função de ativação será aplicada.
     :type value: float
     :param activation: Tipo de função de ativação como string. Valores suportados incluem 'ReLU'.
