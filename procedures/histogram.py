@@ -50,13 +50,14 @@ def _ensure_uint8(img: np.ndarray) -> np.ndarray:
 
 def _equalize_channel(channel: np.ndarray) -> np.ndarray:
     """
-    Equaliza o histograma de um único canal, redistribuindo os níveis de intensidade
-    ao longo do intervalo do canal.
+    Equaliza os valores de um canal de imagem.
 
-    :param channel: Canal de imagem de entrada como um array 2D do NumPy. Deve ser do tipo
-                    uint8 ou conversível para uint8.
-    :return: Array 2D do mesmo formato do canal de entrada com o histograma equalizado.
-             Tipo de dado é uint8.
+    :param channel: Canal de imagem em escala de cinza, representado como um array
+        bidimensional de valores inteiros não-negativos.
+    :type channel: np.ndarray
+    :return: Canal de imagem equalizado, onde os valores foram redistribuídos de
+        acordo com a equalização de histograma.
+    :rtype: np.ndarray
     """
     m, n = channel.shape
     L = 256
