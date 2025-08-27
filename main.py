@@ -20,7 +20,7 @@ def main():
 
     # aplica pós-processamento e salva normalizado
     sobel_processed = post_process_sobel(filtered_img)
-    Image.fromarray(sobel_processed).save(OUTPUT_PATH + "/sobel/"+ export_file_name + "-processed1.png")
+    Image.fromarray(sobel_processed).save(OUTPUT_PATH + "/sobel/"+ export_file_name + "-processed.png")
 
     img = np.array(Image.open(FILE_PATH))
     out = equalize_and_local_expansion(img, 100, 100)
